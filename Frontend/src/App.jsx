@@ -7,7 +7,9 @@ import {
 } from 'lucide-react';
 
 // const API_URL = "http://localhost:5000/api";
+
 const API_URL = import.meta.env.VITE_API_URL;
+console.log(API_URL);
 const USER_ID = "69554c84d10abfad047d2862";
 
 function App() {
@@ -21,7 +23,7 @@ function App() {
 
   // Configuration State
   const [config, setConfig] = useState({
-    classLevel: 5,
+    classLevel: 1,
     subject: "Science",
     persona: "teacher"
   });
@@ -87,11 +89,87 @@ function App() {
 
   const toggleTheme = () => setDarkMode(!darkMode);
 
-  const formatText = (text) => {
-    return text.split('**').map((part, i) =>
-      i % 2 === 1 ? <strong key={i} className={darkMode ? "text-blue-400 font-bold" : "text-blue-600 font-bold"}>{part}</strong> : part
+  // const formatText = (text) => {
+  //   return text.split('**').map((part, i) =>
+  //     i % 2 === 1 ? <strong key={i} className={darkMode ? "text-blue-400 font-bold" : "text-blue-600 font-bold"}>{part}</strong> : part
+  //   );
+  // };
+
+const formatText = (text) => {
+  return text.split('\n').map((line, index) => {
+    const trimmedLine = line.trim();
+
+    // --- 1. DETECT SPECIAL LINES ---
+    
+    // Is it a horizontal divider? (---)
+    if (trimmedLine === '---') {
+      return <hr key={index} className="my-4 border-t border-gray-300 dark:border-gray-600" />;
+    }
+
+    // Is it a Header? (### Title)
+    if (trimmedLine.startsWith('###')) {
+      // Remove '###' and formatting chars like '*' from the title
+      const cleanHeader = trimmedLine.replace('###', '').replaceAll('*', '').trim();
+      return (
+        <h3 key={index} className="text-lg font-bold text-purple-600 dark:text-purple-400 mt-4 mb-2">
+          {cleanHeader}
+        </h3>
+      );
+    }
+
+    // Is it a Bullet Point? (* Text or - Text)
+    // We check if it starts with '*' but NOT '**' (which is just bold text)
+    // We also check if it starts with '-' but is NOT '---' (divider)
+    const isStarBullet = trimmedLine.startsWith('*') && !trimmedLine.startsWith('**');
+    const isDashBullet = trimmedLine.startsWith('-') && trimmedLine !== '---';
+    const isBullet = isStarBullet || isDashBullet;
+
+    // --- 2. CLEAN UP TEXT ---
+    
+    let cleanText = line;
+    
+    if (isBullet) {
+      // Remove the first character (* or -) and trim whitespace
+      cleanText = trimmedLine.substring(1).trim();
+    }
+
+    // --- 3. FORMAT BOLD CONTENT (**text**) ---
+    
+    const content = cleanText.split('**').map((part, i) =>
+      i % 2 === 1 ? (
+        <strong
+          key={i}
+          className={darkMode ? "text-blue-400 font-bold" : "text-blue-600 font-bold"}
+        >
+          {part}
+        </strong>
+      ) : (
+        part
+      )
     );
-  };
+
+    // --- 4. RENDER ---
+    
+    return (
+      <div 
+        key={index} 
+        className={`flex items-start ${isBullet ? "pl-4 mb-2" : "mb-2"} min-h-[0rem]`}
+      >
+        {isBullet && (
+          // Render a custom bullet point
+          <span className="mr-2 text-xl leading-none text-green-500 select-none">
+            •
+          </span>
+        )}
+        
+        {/* Render text with proper line height */}
+        <span className="flex-1 leading-relaxed text-gray-800 dark:text-gray-100">
+          {content}
+        </span>
+      </div>
+    );
+  });
+};
 
   return (
     // CHANGE 1: 'h-screen' ensures the app never grows taller than the viewport
@@ -246,7 +324,7 @@ function App() {
 
           {messages.map((msg, i) => (
             <div key={i} className={`flex w-full group ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`flex max-w-[90%] md:max-w-[75%] gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+              <div className={`flex max-w-[95%] md:max-w-[75%] gap-2 flex-wrap ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
 
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg mt-1 transition-transform group-hover:scale-110
                   ${msg.role === 'user'
