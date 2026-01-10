@@ -163,7 +163,7 @@ const formatText = (text) => {
         )}
         
         {/* Render text with proper line height */}
-        <span className="flex-1 leading-relaxed text-gray-800 dark:text-gray-100">
+        <span className={`flex-1 leading-relaxed`}>
           {content}
         </span>
       </div>
@@ -343,7 +343,7 @@ const formatText = (text) => {
                       ? 'bg-slate-800/80 backdrop-blur border border-slate-700/50 text-slate-200 rounded-tl-none'
                       : 'bg-white border border-gray-100 text-slate-700 rounded-tl-none')
                   }`}>
-                  <div className="markdown-body">
+                  <div className={`markdown-body`}>
                     {formatText(msg.content)}
                   </div>
                 </div>
