@@ -4,6 +4,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, AlertCircle, ArrowRight, LogIn } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,7 +21,7 @@ const Login = () => {
       const user = result.user;
 
       // 2. Check Backend if user exists
-      const res = await axios.post('http://localhost:5000/api/login', {
+      const res = await axios.post(`${API_URL}/api/login`, {
         email: user.email 
       });
 

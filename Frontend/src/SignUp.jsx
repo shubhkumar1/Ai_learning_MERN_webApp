@@ -7,6 +7,8 @@ import {
   ArrowRight, AlertCircle, CheckCircle2, User 
 } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const Signup = () => {
   const [step, setStep] = useState(1); // Step 1: Google Auth, Step 2: Form
   const [formData, setFormData] = useState({
@@ -47,7 +49,7 @@ const Signup = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/signup', formData);
+      const res = await axios.post(`${API_URL}/api/signup`, formData);
 
       localStorage.setItem('token', res.data.token);
       alert(res.data.message);
