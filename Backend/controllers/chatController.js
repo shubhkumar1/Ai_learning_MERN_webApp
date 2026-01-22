@@ -166,7 +166,7 @@ exports.handleChat = async (req, res) => {
     });
     
     await chatHistory.save();
-    console.log(aiText)
+    // console.log(aiText)
     res.json({ response: aiText });
   } catch (error) {
     console.error("AI Error:", error);

@@ -1,18 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import {
-  Mic, Send, BookOpen, User, Sun, Moon,
+  Mic, Send, BookOpen, User, Sun, Moon, LogOut,
   GraduationCap, Gamepad2, Menu, X, Sparkles,
   ChevronRight
 } from 'lucide-react';
 
-// const API_URL = "http://localhost:5000/api";
+const API_URL = "http://localhost:5000";
 
-const API_URL = import.meta.env.VITE_API_URL;
+// const API_URL = import.meta.env.VITE_API_URL;
 console.log(API_URL);
-const USER_ID = "69554c84d10abfad047d2862";
 
 function App() {
+
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
   // State
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -21,12 +24,46 @@ function App() {
   const [darkMode, setDarkMode] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+
+    // 1. If no token found, force logout immediately
+    if (!token) {
+      handleLogout();
+      return;
+    }
+
+    // 2. Verify token with backend (checks if 5 days passed)
+    axios.get(`${API_URL}/api/me`, {
+      headers: { 'Authorization': token }
+    })
+      .then(res => {
+        setUser(res.data); // Token is valid, save user data
+      })
+      .catch(err => {
+        // If backend says token is expired (401 error)
+        console.log("Session expired:", err);
+        handleLogout();
+      });
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token'); // Delete the key
+    navigate('/'); // Send back to login
+  };
+
   // Configuration State
   const [config, setConfig] = useState({
     classLevel: 1,
     subject: "Science",
     persona: "teacher"
   });
+
+  useEffect(() => {
+    if (user?.classLevel) {
+      setConfig(prev => ({ ...prev, classLevel: user.classLevel }));
+    }
+  }, [user]);
 
   const messagesEndRef = useRef(null);
 
@@ -38,6 +75,10 @@ function App() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading]);
+
+  if (!user) return <div>Loading Profile...</div>;
+
+  const USER_ID = user._id;
 
   // Speech to Text
   const handleVoiceInput = () => {
@@ -68,7 +109,7 @@ function App() {
     setLoading(true);
 
     try {
-      const res = await axios.post(`${API_URL}/chat`, {
+      const res = await axios.post(`${API_URL}/api/chat`, {
         userId: USER_ID,
         message: input,
         currentSubject: config.subject,
@@ -95,81 +136,81 @@ function App() {
   //   );
   // };
 
-const formatText = (text) => {
-  return text.split('\n').map((line, index) => {
-    const trimmedLine = line.trim();
+  const formatText = (text) => {
+    return text.split('\n').map((line, index) => {
+      const trimmedLine = line.trim();
 
-    // --- 1. DETECT SPECIAL LINES ---
-    
-    // Is it a horizontal divider? (---)
-    if (trimmedLine === '---') {
-      return <hr key={index} className="my-4 border-t border-gray-300 dark:border-gray-600" />;
-    }
+      // --- 1. DETECT SPECIAL LINES ---
 
-    // Is it a Header? (### Title)
-    if (trimmedLine.startsWith('###')) {
-      // Remove '###' and formatting chars like '*' from the title
-      const cleanHeader = trimmedLine.replace('###', '').replaceAll('*', '').trim();
-      return (
-        <h3 key={index} className="text-lg font-bold text-purple-600 dark:text-purple-400 mt-4 mb-2">
-          {cleanHeader}
-        </h3>
+      // Is it a horizontal divider? (---)
+      if (trimmedLine === '---') {
+        return <hr key={index} className="my-4 border-t border-gray-300 dark:border-gray-600" />;
+      }
+
+      // Is it a Header? (### Title)
+      if (trimmedLine.startsWith('###')) {
+        // Remove '###' and formatting chars like '*' from the title
+        const cleanHeader = trimmedLine.replace('###', '').replaceAll('*', '').trim();
+        return (
+          <h3 key={index} className="text-lg font-bold text-purple-600 dark:text-purple-400 mt-4 mb-2">
+            {cleanHeader}
+          </h3>
+        );
+      }
+
+      // Is it a Bullet Point? (* Text or - Text)
+      // We check if it starts with '*' but NOT '**' (which is just bold text)
+      // We also check if it starts with '-' but is NOT '---' (divider)
+      const isStarBullet = trimmedLine.startsWith('*') && !trimmedLine.startsWith('**');
+      const isDashBullet = trimmedLine.startsWith('-') && trimmedLine !== '---';
+      const isBullet = isStarBullet || isDashBullet;
+
+      // --- 2. CLEAN UP TEXT ---
+
+      let cleanText = line;
+
+      if (isBullet) {
+        // Remove the first character (* or -) and trim whitespace
+        cleanText = trimmedLine.substring(1).trim();
+      }
+
+      // --- 3. FORMAT BOLD CONTENT (**text**) ---
+
+      const content = cleanText.split('**').map((part, i) =>
+        i % 2 === 1 ? (
+          <strong
+            key={i}
+            className={darkMode ? "text-blue-400 font-bold" : "text-blue-600 font-bold"}
+          >
+            {part}
+          </strong>
+        ) : (
+          part
+        )
       );
-    }
 
-    // Is it a Bullet Point? (* Text or - Text)
-    // We check if it starts with '*' but NOT '**' (which is just bold text)
-    // We also check if it starts with '-' but is NOT '---' (divider)
-    const isStarBullet = trimmedLine.startsWith('*') && !trimmedLine.startsWith('**');
-    const isDashBullet = trimmedLine.startsWith('-') && trimmedLine !== '---';
-    const isBullet = isStarBullet || isDashBullet;
+      // --- 4. RENDER ---
 
-    // --- 2. CLEAN UP TEXT ---
-    
-    let cleanText = line;
-    
-    if (isBullet) {
-      // Remove the first character (* or -) and trim whitespace
-      cleanText = trimmedLine.substring(1).trim();
-    }
-
-    // --- 3. FORMAT BOLD CONTENT (**text**) ---
-    
-    const content = cleanText.split('**').map((part, i) =>
-      i % 2 === 1 ? (
-        <strong
-          key={i}
-          className={darkMode ? "text-blue-400 font-bold" : "text-blue-600 font-bold"}
+      return (
+        <div
+          key={index}
+          className={`flex items-start ${isBullet ? "pl-4 mb-2" : "mb-2"} min-h-[0rem]`}
         >
-          {part}
-        </strong>
-      ) : (
-        part
-      )
-    );
+          {isBullet && (
+            // Render a custom bullet point
+            <span className="mr-2 text-xl leading-none text-green-500 select-none">
+              •
+            </span>
+          )}
 
-    // --- 4. RENDER ---
-    
-    return (
-      <div 
-        key={index} 
-        className={`flex items-start ${isBullet ? "pl-4 mb-2" : "mb-2"} min-h-[0rem]`}
-      >
-        {isBullet && (
-          // Render a custom bullet point
-          <span className="mr-2 text-xl leading-none text-green-500 select-none">
-            •
+          {/* Render text with proper line height */}
+          <span className={`flex-1 leading-relaxed`}>
+            {content}
           </span>
-        )}
-        
-        {/* Render text with proper line height */}
-        <span className={`flex-1 leading-relaxed`}>
-          {content}
-        </span>
-      </div>
-    );
-  });
-};
+        </div>
+      );
+    });
+  };
 
   return (
     // CHANGE 1: 'h-screen' ensures the app never grows taller than the viewport
@@ -273,6 +314,18 @@ const formatText = (text) => {
           >
             {darkMode ? <Sun size={20} className="animate-spin-slow" /> : <Moon size={20} />}
             <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
+          </button>
+          <br />
+
+          <button
+            onClick={handleLogout}
+            className={`w-full flex items-center justify-center gap-3 p-4 rounded-xl transition-all duration-300 transform active:scale-95 font-semibold
+              ${darkMode
+                ? 'bg-slate-800 text-red-400 hover:bg-slate-700 shadow-lg shadow-black/20'
+                : 'bg-white text-red-500 border border-gray-200 hover:bg-gray-50 shadow-sm'}`}
+          >
+            <LogOut size={20} />
+            <span>Log Out</span>
           </button>
         </div>
       </aside>
@@ -409,7 +462,7 @@ const formatText = (text) => {
         </div>
       </main>
 
-      <style jsx>{`
+      <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
         }
