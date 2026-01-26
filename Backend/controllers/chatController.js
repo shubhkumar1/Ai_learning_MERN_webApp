@@ -41,10 +41,10 @@
 
 //     const finalPrompt = `
 //       ${systemInstruction}
-      
+
 //       CONTEXT (Previous conversation):
 //       ${recentHistory}
-      
+
 //       CURRENT SUBJECT: ${currentSubject}
 //       NEW QUESTION: ${message}
 //     `;
@@ -69,7 +69,7 @@
 
 
 
-const OpenAI = require("openai"); 
+const OpenAI = require("openai");
 const ChatHistory = require('../models/ChatHistory');
 const User = require('../models/User');
 const { constructSystemPrompt } = require('../utils/promptFactory');
@@ -81,7 +81,7 @@ const client = new OpenAI({
 });
 
 // Basic Bad Word Filter
-const BANNED_TOPICS = ['violence', 'kill', 'drug', 'sex']; 
+const BANNED_TOPICS = ['violence', 'kill', 'drug', 'sex'];
 
 exports.handleChat = async (req, res) => {
   try {
@@ -121,7 +121,7 @@ exports.handleChat = async (req, res) => {
         role: m.role === 'model' ? 'assistant' : 'user',
         content: m.content
       };
-      
+
       // If the saved message has reasoning details, pass them back to the API
       // to maintain the "chain of thought" context
       //------------------------------------------------------------
@@ -129,16 +129,16 @@ exports.handleChat = async (req, res) => {
       //   msgObj.reasoning_details = m.reasoning_details;
       // }
       //-------------------------------------------------------------
-      
+
       return msgObj;
     });
-    
+
     messages.push(...historyMessages);
 
     // Append Current User Message
-    messages.push({ 
-      role: "user", 
-      content: `[Current Subject: ${currentSubject}] ${message}` 
+    messages.push({
+      role: "user",
+      content: `[Current Subject: ${currentSubject}] ${message}`
     });
 
     // 6. Call AI with Reasoning Enabled
@@ -157,16 +157,16 @@ exports.handleChat = async (req, res) => {
 
     // 7. Save to DB
     chatHistory.messages.push({ role: 'user', content: message });
-    
+
     // Save AI response along with the reasoning_details for future context
-    chatHistory.messages.push({ 
-      role: 'model', 
+    chatHistory.messages.push({
+      role: 'model',
       content: aiText,
       // reasoning_details: reasoningDetails 
     });
-    
+
     await chatHistory.save();
-    // console.log(aiText)
+    console.log(aiText)
     res.json({ response: aiText });
   } catch (error) {
     console.error("AI Error:", error);
