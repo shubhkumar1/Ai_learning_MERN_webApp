@@ -147,10 +147,10 @@ function App() {
         return <hr key={index} className="my-4 border-t border-gray-300 dark:border-gray-600" />;
       }
 
-      // Is it a Header? (### Title)
-      if (trimmedLine.startsWith('###')) {
+      // Is it a Header? (## Title)
+      if (trimmedLine.startsWith('##')) {
         // Remove '###' and formatting chars like '*' from the title
-        const cleanHeader = trimmedLine.replace('###', '').replaceAll('*', '').trim();
+        const cleanHeader = trimmedLine.replace('##', '').replaceAll('*', '').trim();
         return (
           <h3 key={index} className="text-lg font-bold text-purple-600 dark:text-purple-400 mt-4 mb-2">
             {cleanHeader}

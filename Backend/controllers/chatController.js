@@ -143,7 +143,7 @@ exports.handleChat = async (req, res) => {
 
     // 6. Call AI with Reasoning Enabled
     const completion = await client.chat.completions.create({
-      model: 'xiaomi/mimo-v2-flash:free',
+      model: 'nvidia/nemotron-3-nano-30b-a3b:free',
       messages: messages,
       // Enabling reasoning as per your snippet
       // reasoning: { enabled: true } 
@@ -166,7 +166,7 @@ exports.handleChat = async (req, res) => {
     });
 
     await chatHistory.save();
-    console.log(aiText)
+    // console.log(aiText)
     res.json({ response: aiText });
   } catch (error) {
     console.error("AI Error:", error);
