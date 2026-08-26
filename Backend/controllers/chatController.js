@@ -143,7 +143,7 @@ exports.handleChat = async (req, res) => {
 
     // 6. Call AI with Reasoning Enabled
     const completion = await client.chat.completions.create({
-      model: 'nvidia/nemotron-3-nano-30b-a3b:free',
+      model: 'nvidia/nemotron-3.5-lightning:free',
       messages: messages,
       // Enabling reasoning as per your snippet
       // reasoning: { enabled: true } 
